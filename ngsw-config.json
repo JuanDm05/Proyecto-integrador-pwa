@@ -1,0 +1,146 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.csr.html",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+        ]
+      }
+    },
+    {
+      "name": "diet-module",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/diet-*.js",
+          "/nutrition-*.js",
+          "/src_app_diet_*.js",
+          "/src_app_nutrition_*.js",
+          "/src_app_components_diet_*.js",
+          "/src_app_components_nutrition_*.js",
+          "/src_app_services_diet_*.js",
+          "/src_app_services_nutrition_*.js"
+        ]
+      }
+    },
+    {
+      "name": "routine-module",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/routine-*.js",
+          "/exercise-*.js",
+          "/workout-*.js",
+          "/src_app_routine_*.js",
+          "/src_app_exercise_*.js",
+          "/src_app_workout_*.js",
+          "/src_app_components_routine_*.js",
+          "/src_app_components_exercise_*.js",
+          "/src_app_components_workout_*.js",
+          "/src_app_services_routine_*.js",
+          "/src_app_services_exercise_*.js",
+          "/src_app_services_workout_*.js"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "diet-api",
+      "urls": [
+        "/api/diets/**",
+        "/api/nutrition/**",
+        "/api/foods/**",
+        "/api/meal-plans/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "1d",
+        "strategy": "performance",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "routine-api",
+      "urls": [
+        "/api/routines/**",
+        "/api/exercises/**",
+        "/api/workouts/**",
+        "/api/training/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "1d",
+        "strategy": "performance",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "fitness-assets",
+      "urls": [
+        "/assets/diet/**",
+        "/assets/foods/**",
+        "/assets/nutrition/**",
+        "/assets/routines/**",
+        "/assets/exercises/**",
+        "/assets/workouts/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "30d",
+        "strategy": "performance"
+      }
+    },
+    {
+      "name": "user-fitness-data",
+      "urls": [
+        "/api/user/diet-plan",
+        "/api/user/nutrition-goals",
+        "/api/user/meal-plan",
+        "/api/user/routine-plan",
+        "/api/user/workout-plan",
+        "/api/user/progress"
+      ],
+      "cacheConfig": {
+        "maxSize": 20,
+        "maxAge": "1h",
+        "strategy": "freshness",
+        "timeout": "5s"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/diet",
+    "/nutrition",
+    "/meal-plan",
+    "/foods",
+    "/routine",
+    "/exercise",
+    "/workout",
+    "/training",
+    "/progress",
+    "/home",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**"
+  ]
+}

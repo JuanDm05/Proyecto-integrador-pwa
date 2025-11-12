@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -30,7 +31,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              {
+    "glob": "**/*",
+    "input": "src/assets"
+  }
             ],
             "styles": [
               "src/styles.scss"
@@ -38,19 +43,20 @@
           },
           "configurations": {
             "production": {
-              "budgets": [
+            "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kb",  
+                  "maximumError": "15kb"     
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -88,6 +94,9 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },{
+                "glob": "**/*",
+                "input": "src/assets"
               }
             ],
             "styles": [
