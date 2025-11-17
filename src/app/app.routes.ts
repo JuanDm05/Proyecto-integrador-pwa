@@ -11,6 +11,8 @@ export const routes: Routes = [
   { path: 'diet', component: DietComponent },
   { path: 'routines', component: RoutinesComponent },
   { path: 'chat', component: ChatComponent },
+  { path: 'register', loadComponent: () => import('./register/register.component').then(m => m.RegisterComponent)},
   { path: '', redirectTo: '/login', pathMatch: 'full' }, // Ruta por defecto
   { path: '**', redirectTo: '/home' } // Ruta comodín para 404
+
 ];

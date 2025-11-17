@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -74,6 +75,7 @@ import { Router } from '@angular/router';
             <span class="google-icon">🔍</span>
             <span class="button-text">Acceder con Google</span>
           </button>
+
 
           <!-- Enlace "¿Olvidaste tu contraseña?" -->
           <div class="forgot-password-link">
@@ -516,24 +518,62 @@ export class LoginComponent {
   emailFocused = false;
   passwordFocused = false;
 
-  constructor(private router: Router) {}
+  errorMessage = '';
+
+  constructor(
+    private router: Router,
+    private authService: AuthService   
+  ) {}
 
   /**
    * Intenta iniciar sesión con el correo/usuario y la contraseña.
    */
   login() {
-    console.log('Intentando iniciar sesión con:', this.email, 'y contraseña oculta.');
-    // Aquí iría la lógica real de autenticación
-    this.router.navigateByUrl('/home', { replaceUrl: true });
+    this.errorMessage = '';
+
+    this.authService.login(this.email, this.password)
+      .then(() => {
+        console.log('Login correctamente');
+        this.router.navigateByUrl('/home', { replaceUrl: true });
+      })
+      .catch((err) => {
+        console.error(err);
+        this.errorMessage = this.getFirebaseError(err.code);
+      });
   }
 
   /**
    * Maneja el inicio de sesión a través de la cuenta de Google.
    */
   loginWithGoogle() {
-    console.log('Iniciando sesión con Google...');
-    // Lógica para autenticación con Google
-    this.router.navigateByUrl('/home', { replaceUrl: true });
+    this.errorMessage = '';
+
+    this.authService.loginGoogle()
+      .then(() => {
+        console.log('Login con Google exitoso');
+        this.router.navigateByUrl('/home', { replaceUrl: true });
+      })
+      .catch((err) => {
+        console.error(err);
+        this.errorMessage = this.getFirebaseError(err.code);
+      });
+  }
+
+    getFirebaseError(code: string): string {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no es válido.';
+      case 'auth/user-not-found':
+        return 'No existe una cuenta con este correo.';
+      case 'auth/wrong-password':
+        return 'La contraseña es incorrecta.';
+      case 'auth/invalid-credential':
+        return 'Correo o contraseña incorrectos.';
+      case 'auth/popup-closed-by-user':
+        return 'La ventana de Google fue cerrada.';
+      default:
+        return 'Error al iniciar sesión. Intenta nuevamente.';
+    }
   }
 
   /**
