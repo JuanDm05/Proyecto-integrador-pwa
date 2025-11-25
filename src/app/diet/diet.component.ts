@@ -9,6 +9,9 @@ export interface Meal {
   desayuno: string;
   comida: string;
   cena: string;
+  desayunoDone?: boolean;
+  comidaDone?: boolean;
+  cenaDone?: boolean;
 }
 
 export interface WeeklyMenu {
@@ -17,13 +20,17 @@ export interface WeeklyMenu {
 }
 
 class TemporaryDietService {
-  private _menu$ = new BehaviorSubject<WeeklyMenu[]>([
+  private storageKey = 'diet-progress';
+  private defaultMenu: WeeklyMenu[] = [
     { 
       day: 'Lunes', 
       meals: { 
         desayuno: 'Avena con bayas y semillas de chía (250 Kcal)', 
         comida: 'Pechuga de pollo a la plancha con ensalada mixta (400 Kcal)', 
-        cena: 'Salmón al horno con espárragos (350 Kcal)' 
+        cena: 'Salmón al horno con espárragos (350 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -31,7 +38,10 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Batido de proteína con espinacas (280 Kcal)', 
         comida: 'Bowl de lentejas con arroz integral (450 Kcal)', 
-        cena: 'Tortilla de claras con pimientos (250 Kcal)' 
+        cena: 'Tortilla de claras con pimientos (250 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -39,7 +49,10 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Yogurt griego con nueces (220 Kcal)', 
         comida: 'Tilapia con brócoli y batata (380 Kcal)', 
-        cena: 'Sopa de verduras con pollo (300 Kcal)' 
+        cena: 'Sopa de verduras con pollo (300 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -47,7 +60,10 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Tostada integral con aguacate (300 Kcal)', 
         comida: 'Ensalada César con crutones (420 Kcal)', 
-        cena: 'Pavo molido con calabacín (330 Kcal)' 
+        cena: 'Pavo molido con calabacín (330 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -55,7 +71,10 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Fruta fresca y queso cottage (200 Kcal)', 
         comida: 'Pasta integral con albóndigas (500 Kcal)', 
-        cena: 'Tacos de lechuga con atún (280 Kcal)' 
+        cena: 'Tacos de lechuga con atún (280 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -63,7 +82,10 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Hotcakes de avena (320 Kcal)', 
         comida: 'Hamburguesa de pollo en pan integral (480 Kcal)', 
-        cena: 'Pizza saludable de coliflor (370 Kcal)' 
+        cena: 'Pizza saludable de coliflor (370 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
     { 
@@ -71,12 +93,88 @@ class TemporaryDietService {
       meals: { 
         desayuno: 'Waffles proteicos con mantequilla de maní (350 Kcal)', 
         comida: 'Pollo con quinoa y frijoles (450 Kcal)', 
-        cena: 'Cena libre moderada (600 Kcal)' 
+        cena: 'Cena libre moderada (600 Kcal)',
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
       } 
     },
-  ]);
+  ];
+
+  private _menu$ = new BehaviorSubject<WeeklyMenu[]>(this.loadMenuFromStorage());
 
   public menu$ = this._menu$.asObservable();
+
+  private loadMenuFromStorage(): WeeklyMenu[] {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem(this.storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Combinar el menú por defecto con el progreso guardado
+          return this.defaultMenu.map((dayMenu, index) => {
+            const storedDay = parsed[index];
+            if (storedDay) {
+              return {
+                ...dayMenu,
+                meals: {
+                  ...dayMenu.meals,
+                  desayunoDone: storedDay.meals?.desayunoDone || false,
+                  comidaDone: storedDay.meals?.comidaDone || false,
+                  cenaDone: storedDay.meals?.cenaDone || false
+                }
+              };
+            }
+            return dayMenu;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading menu from storage:', error);
+    }
+    return this.defaultMenu;
+  }
+
+  private saveMenuToStorage(menu: WeeklyMenu[]): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(this.storageKey, JSON.stringify(menu));
+      }
+    } catch (error) {
+      console.error('Error saving menu to storage:', error);
+    }
+  }
+
+  updateMealStatus(dayIndex: number, mealType: keyof Meal, completed: boolean): void {
+    const currentMenu = this._menu$.value;
+    const updatedMenu = [...currentMenu];
+    
+    updatedMenu[dayIndex] = {
+      ...updatedMenu[dayIndex],
+      meals: {
+        ...updatedMenu[dayIndex].meals,
+        [mealType]: completed
+      }
+    };
+
+    this._menu$.next(updatedMenu);
+    this.saveMenuToStorage(updatedMenu);
+  }
+
+  resetProgress(): void {
+    const resetMenu = this.defaultMenu.map(day => ({
+      ...day,
+      meals: {
+        ...day.meals,
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
+      }
+    }));
+    
+    this._menu$.next(resetMenu);
+    this.saveMenuToStorage(resetMenu);
+  }
 }
 
 @Component({
@@ -94,6 +192,11 @@ class TemporaryDietService {
             </svg>
           </button>
           <h1 class="title">Plan de Dieta</h1>
+          <button class="reset-button" (click)="resetProgress()" title="Reiniciar progreso">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -106,47 +209,80 @@ class TemporaryDietService {
             <div class="nutrition-icon">🥗</div>
             <h1>Menú Semanal Personalizado</h1>
             <p>Total de calorías aproximado por día: 1000 - 1200 Kcal.</p>
+            <div class="progress-info" *ngIf="totalProgress > 0">
+              <div class="progress-text">
+                Progreso semanal: {{ completedMeals }}/{{ totalMeals }} comidas completadas
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+              </div>
+            </div>
           </div>
 
           <!-- Lista de Menús Diarios -->
           <div class="diet-list">
             <div 
-              *ngFor="let m of menu" 
+              *ngFor="let m of menu; let i = index" 
               class="diet-card"
-              [class.weekend]="m.day === 'Sábado' || m.day === 'Domingo'">
+              [class.weekend]="m.day === 'Sábado' || m.day === 'Domingo'"
+              [class.completed]="getDayProgress(i) === 100">
               
               <!-- Badge del día -->
               <div class="day-badge">
                 <div class="calendar-icon">📅</div>
                 <span>{{ m.day }}</span>
+                <div class="day-progress" *ngIf="getDayProgress(i) > 0">
+                  {{ getDayProgress(i) }}%
+                </div>
               </div>
               
               <!-- Contenido de las comidas -->
               <div class="meals-content">
                 
                 <!-- Desayuno -->
-                <div class="meal-section breakfast">
+                <div class="meal-section breakfast" [class.completed]="m.meals.desayunoDone">
                   <div class="meal-header">
                     <div class="meal-icon">☀️</div>
                     <h3>Desayuno</h3>
+                    <label class="checkbox-container">
+                      <input 
+                        type="checkbox" 
+                        [checked]="m.meals.desayunoDone"
+                        (change)="toggleMeal(i, 'desayunoDone', $event)">
+                      <span class="checkmark"></span>
+                    </label>
                   </div>
                   <p>{{ m.meals.desayuno }}</p>
                 </div>
                 
                 <!-- Comida -->
-                <div class="meal-section lunch">
+                <div class="meal-section lunch" [class.completed]="m.meals.comidaDone">
                   <div class="meal-header">
                     <div class="meal-icon">🥗</div>
                     <h3>Comida</h3>
+                    <label class="checkbox-container">
+                      <input 
+                        type="checkbox" 
+                        [checked]="m.meals.comidaDone"
+                        (change)="toggleMeal(i, 'comidaDone', $event)">
+                      <span class="checkmark"></span>
+                    </label>
                   </div>
                   <p>{{ m.meals.comida }}</p>
                 </div>
                 
                 <!-- Cena -->
-                <div class="meal-section dinner">
+                <div class="meal-section dinner" [class.completed]="m.meals.cenaDone">
                   <div class="meal-header">
                     <div class="meal-icon">🌙</div>
                     <h3>Cena</h3>
+                    <label class="checkbox-container">
+                      <input 
+                        type="checkbox" 
+                        [checked]="m.meals.cenaDone"
+                        (change)="toggleMeal(i, 'cenaDone', $event)">
+                      <span class="checkmark"></span>
+                    </label>
                   </div>
                   <p>{{ m.meals.cena }}</p>
                 </div>
@@ -215,6 +351,7 @@ class TemporaryDietService {
     .header-content {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 12px 16px;
       max-width: 1200px;
       margin: 0 auto;
@@ -231,11 +368,29 @@ class TemporaryDietService {
       justify-content: center;
       color: white;
       cursor: pointer;
-      margin-right: 12px;
       transition: all 0.3s ease;
     }
 
     .back-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .reset-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .reset-button:hover {
       background: rgba(255, 255, 255, 0.3);
       transform: scale(1.05);
     }
@@ -308,9 +463,38 @@ class TemporaryDietService {
     .header-info p {
       color: #666;
       font-size: 16px;
-      margin: 0;
+      margin: 0 0 16px 0;
       line-height: 1.6;
       font-weight: 600;
+    }
+
+    .progress-info {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      color: #4f9d60;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      max-width: 300px;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #4f9d60 0%, #6bb77b 100%);
+      border-radius: 4px;
+      transition: width 0.5s ease;
     }
 
     /* Diet List */
@@ -334,6 +518,11 @@ class TemporaryDietService {
       display: flex;
       flex-direction: column;
       gap: 18px;
+    }
+
+    .diet-card.completed {
+      border-color: rgba(79, 157, 96, 0.5);
+      background: linear-gradient(145deg, #f0fff0 0%, #e8f5e9 100%);
     }
 
     .diet-card::before {
@@ -385,6 +574,14 @@ class TemporaryDietService {
       font-size: 20px;
     }
 
+    .day-progress {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     /* Meals Content */
     .meals-content {
       display: grid;
@@ -407,10 +604,33 @@ class TemporaryDietService {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      position: relative;
+    }
+
+    .meal-section.completed {
+      background: linear-gradient(145deg, #f0fff0 0%, #e8f5e9 100%);
+      border-color: #4f9d60;
+    }
+
+    .meal-section.completed::after {
+      content: '✓ Completado';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #4f9d60;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
     }
 
     .meal-section.breakfast {
       border-color: rgba(255, 167, 38, 0.3);
+    }
+
+    .meal-section.breakfast.completed {
+      border-color: #ff9800;
     }
 
     .meal-section.breakfast .meal-header {
@@ -421,12 +641,20 @@ class TemporaryDietService {
       border-color: rgba(102, 187, 106, 0.3);
     }
 
+    .meal-section.lunch.completed {
+      border-color: #66bb6a;
+    }
+
     .meal-section.lunch .meal-header {
       background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
     }
 
     .meal-section.dinner {
       border-color: rgba(92, 107, 192, 0.3);
+    }
+
+    .meal-section.dinner.completed {
+      border-color: #5c6bc0;
     }
 
     .meal-section.dinner .meal-header {
@@ -450,9 +678,18 @@ class TemporaryDietService {
     .meal-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       padding: 10px 12px;
       border-radius: 10px;
+    }
+
+    .meal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #2c5f3d;
+      flex: 1;
     }
 
     .meal-icon {
@@ -461,11 +698,44 @@ class TemporaryDietService {
       animation: bounce 2s ease-in-out infinite;
     }
 
-    .meal-header h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 800;
-      color: #2c5f3d;
+    /* Checkbox Styles */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .checkbox-container input {
+      display: none;
+    }
+
+    .checkmark {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .checkbox-container input:checked + .checkmark {
+      background: #4f9d60;
+      border-color: #4f9d60;
+    }
+
+    .checkbox-container input:checked + .checkmark::after {
+      content: '✓';
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .checkbox-container:hover .checkmark {
+      border-color: #4f9d60;
+      transform: scale(1.1);
     }
 
     /* Weekend Emoji */
@@ -571,6 +841,16 @@ class TemporaryDietService {
       .meals-content {
         gap: 12px;
       }
+
+      .meal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .checkbox-container {
+        align-self: flex-end;
+      }
     }
   `]
 })
@@ -601,6 +881,55 @@ export class DietComponent implements OnInit, OnDestroy {
     this.menuSub?.unsubscribe();
     window.removeEventListener('online', () => this.handleOnline());
     window.removeEventListener('offline', () => this.handleOffline());
+  }
+
+  // Propiedades computadas para el progreso
+  get completedMeals(): number {
+    return this.menu.reduce((total, day) => {
+      return total + 
+        (day.meals.desayunoDone ? 1 : 0) +
+        (day.meals.comidaDone ? 1 : 0) +
+        (day.meals.cenaDone ? 1 : 0);
+    }, 0);
+  }
+
+  get totalMeals(): number {
+    return this.menu.length * 3;
+  }
+
+  get progressPercentage(): number {
+    return this.totalMeals > 0 ? Math.round((this.completedMeals / this.totalMeals) * 100) : 0;
+  }
+
+  get totalProgress(): number {
+    return this.completedMeals;
+  }
+
+  // Método para obtener el progreso de un día específico
+  getDayProgress(dayIndex: number): number {
+    const day = this.menu[dayIndex];
+    if (!day) return 0;
+    
+    const completed = [
+      day.meals.desayunoDone,
+      day.meals.comidaDone,
+      day.meals.cenaDone
+    ].filter(Boolean).length;
+    
+    return Math.round((completed / 3) * 100);
+  }
+
+  // Método para alternar el estado de una comida
+  toggleMeal(dayIndex: number, mealType: 'desayunoDone' | 'comidaDone' | 'cenaDone', event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.dietService.updateMealStatus(dayIndex, mealType, checked);
+  }
+
+  // Método para reiniciar el progreso
+  resetProgress(): void {
+    if (confirm('¿Estás seguro de que quieres reiniciar todo tu progreso?')) {
+      this.dietService.resetProgress();
+    }
   }
 
   private handleOnline() {
