@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BehaviorSubject, Subscription } from 'rxjs';
+import { FirebaseService } from '../services/diet.service';
+
+
 
 // Servicio integrado - mismo patrón que usamos en chat
 export interface Meal {
@@ -178,6 +181,9 @@ class TemporaryDietService {
 }
 
 @Component({
+
+  
+
   selector: 'app-diet',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
@@ -855,30 +861,64 @@ class TemporaryDietService {
   `]
 })
 export class DietComponent implements OnInit, OnDestroy {
+  constructor(private firebaseService: FirebaseService) {}
+
   menu: WeeklyMenu[] = [];
-  private menuSub?: Subscription;
-  isOnline = navigator.onLine;
+  subscription!: Subscription;
+  isOnline = true;
   showOnlineBanner = false;
 
-  // Usar servicio temporal integrado
+
   private dietService = new TemporaryDietService();
 
-  ngOnInit() {
-    // Suscribirse a los cambios del menú
-    this.menuSub = this.dietService.menu$.subscribe(m => this.menu = m);
+async ngOnInit(): Promise<void> {
 
-    // Manejar eventos de conexión
-    window.addEventListener('online', () => this.handleOnline());
-    window.addEventListener('offline', () => this.handleOffline());
+  // Orden correcto de la semana
+  const ordenSemana = [
+    "lunes",
+    "martes",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sabado",
+    "domingo"
+  ];
 
-    // Verificar estado inicial
-    if (!this.isOnline) {
-      this.handleOffline();
-    }
+  try {
+    // 1. Cargar menú desde Firebase
+    const data = await this.firebaseService.obtenerMenuSemanal();
+    console.log("MENÚ DESDE FIREBASE:", data);
+
+    // 2. Ordenar según la semana
+    const dataOrdenada = data.sort((a: any, b: any) =>
+      ordenSemana.indexOf(a.day) - ordenSemana.indexOf(b.day)
+    );
+
+    // 3. Mapear con flags de checklist
+    this.menu = dataOrdenada.map(d => ({
+      day: d.day,
+      meals: {
+        desayuno: d.desayuno,
+        comida: d.comida,
+        cena: d.cena,
+        desayunoDone: false,
+        comidaDone: false,
+        cenaDone: false
+      }
+    }));
+
+  } catch (error) {
+    console.error("Error cargando el menú:", error);
   }
 
+
+  // 2. Estado de conexión (esto lo dejas igual)
+  this.isOnline = navigator.onLine;
+}
+
+
   ngOnDestroy() {
-    this.menuSub?.unsubscribe();
+    this.subscription?.unsubscribe();
     window.removeEventListener('online', () => this.handleOnline());
     window.removeEventListener('offline', () => this.handleOffline());
   }
@@ -898,7 +938,9 @@ export class DietComponent implements OnInit, OnDestroy {
   }
 
   get progressPercentage(): number {
-    return this.totalMeals > 0 ? Math.round((this.completedMeals / this.totalMeals) * 100) : 0;
+    return this.totalMeals > 0
+      ? Math.round((this.completedMeals / this.totalMeals) * 100)
+      : 0;
   }
 
   get totalProgress(): number {
@@ -920,10 +962,27 @@ export class DietComponent implements OnInit, OnDestroy {
   }
 
   // Método para alternar el estado de una comida
-  toggleMeal(dayIndex: number, mealType: 'desayunoDone' | 'comidaDone' | 'cenaDone', event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    this.dietService.updateMealStatus(dayIndex, mealType, checked);
-  }
+toggleMeal(i: number, meal: keyof Meal, event: any) {
+  const completed = event.target.checked;
+
+  this.dietService.updateMealStatus(i, meal, completed);
+
+  const m = this.menu[i].meals;
+
+  const dataFirebase = {
+    desayuno: m.desayunoDone,
+    comida: m.comidaDone,
+    cena: m.cenaDone
+  };
+
+  const dayName = this.menu[i].day;
+
+  this.firebaseService.guardarChecklist(dayName, dataFirebase)
+    .then(() => console.log("Guardado en Firebase", dayName))
+    .catch(err => console.error("Error Firebase:", err));
+}
+
+
 
   // Método para reiniciar el progreso
   resetProgress(): void {

@@ -1,3 +1,5 @@
+
+
 export const environment = {
   firebaseConfig: {
   apiKey: "AIzaSyD7Nyn83lzXCb3ISWZ4TjT2yd15SkIylEY",
@@ -8,3 +10,4 @@ export const environment = {
   appId: "1:960881026186:web:11aa629feb93acd5117973"
   }
 };
+
