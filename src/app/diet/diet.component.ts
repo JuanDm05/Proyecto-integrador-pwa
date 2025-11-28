@@ -2,12 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { BehaviorSubject, Subscription } from 'rxjs';
 import { FirebaseService } from '../services/diet.service';
 
-
-
-// Servicio integrado - mismo patrón que usamos en chat
 export interface Meal {
   desayuno: string;
   comida: string;
@@ -22,174 +18,12 @@ export interface WeeklyMenu {
   meals: Meal;
 }
 
-class TemporaryDietService {
-  private storageKey = 'diet-progress';
-  private defaultMenu: WeeklyMenu[] = [
-    { 
-      day: 'Lunes', 
-      meals: { 
-        desayuno: 'Avena con bayas y semillas de chía (250 Kcal)', 
-        comida: 'Pechuga de pollo a la plancha con ensalada mixta (400 Kcal)', 
-        cena: 'Salmón al horno con espárragos (350 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Martes', 
-      meals: { 
-        desayuno: 'Batido de proteína con espinacas (280 Kcal)', 
-        comida: 'Bowl de lentejas con arroz integral (450 Kcal)', 
-        cena: 'Tortilla de claras con pimientos (250 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Miércoles', 
-      meals: { 
-        desayuno: 'Yogurt griego con nueces (220 Kcal)', 
-        comida: 'Tilapia con brócoli y batata (380 Kcal)', 
-        cena: 'Sopa de verduras con pollo (300 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Jueves', 
-      meals: { 
-        desayuno: 'Tostada integral con aguacate (300 Kcal)', 
-        comida: 'Ensalada César con crutones (420 Kcal)', 
-        cena: 'Pavo molido con calabacín (330 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Viernes', 
-      meals: { 
-        desayuno: 'Fruta fresca y queso cottage (200 Kcal)', 
-        comida: 'Pasta integral con albóndigas (500 Kcal)', 
-        cena: 'Tacos de lechuga con atún (280 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Sábado', 
-      meals: { 
-        desayuno: 'Hotcakes de avena (320 Kcal)', 
-        comida: 'Hamburguesa de pollo en pan integral (480 Kcal)', 
-        cena: 'Pizza saludable de coliflor (370 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-    { 
-      day: 'Domingo', 
-      meals: { 
-        desayuno: 'Waffles proteicos con mantequilla de maní (350 Kcal)', 
-        comida: 'Pollo con quinoa y frijoles (450 Kcal)', 
-        cena: 'Cena libre moderada (600 Kcal)',
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      } 
-    },
-  ];
-
-  private _menu$ = new BehaviorSubject<WeeklyMenu[]>(this.loadMenuFromStorage());
-
-  public menu$ = this._menu$.asObservable();
-
-  private loadMenuFromStorage(): WeeklyMenu[] {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const stored = localStorage.getItem(this.storageKey);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          // Combinar el menú por defecto con el progreso guardado
-          return this.defaultMenu.map((dayMenu, index) => {
-            const storedDay = parsed[index];
-            if (storedDay) {
-              return {
-                ...dayMenu,
-                meals: {
-                  ...dayMenu.meals,
-                  desayunoDone: storedDay.meals?.desayunoDone || false,
-                  comidaDone: storedDay.meals?.comidaDone || false,
-                  cenaDone: storedDay.meals?.cenaDone || false
-                }
-              };
-            }
-            return dayMenu;
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading menu from storage:', error);
-    }
-    return this.defaultMenu;
-  }
-
-  private saveMenuToStorage(menu: WeeklyMenu[]): void {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(this.storageKey, JSON.stringify(menu));
-      }
-    } catch (error) {
-      console.error('Error saving menu to storage:', error);
-    }
-  }
-
-  updateMealStatus(dayIndex: number, mealType: keyof Meal, completed: boolean): void {
-    const currentMenu = this._menu$.value;
-    const updatedMenu = [...currentMenu];
-    
-    updatedMenu[dayIndex] = {
-      ...updatedMenu[dayIndex],
-      meals: {
-        ...updatedMenu[dayIndex].meals,
-        [mealType]: completed
-      }
-    };
-
-    this._menu$.next(updatedMenu);
-    this.saveMenuToStorage(updatedMenu);
-  }
-
-  resetProgress(): void {
-    const resetMenu = this.defaultMenu.map(day => ({
-      ...day,
-      meals: {
-        ...day.meals,
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      }
-    }));
-    
-    this._menu$.next(resetMenu);
-    this.saveMenuToStorage(resetMenu);
-  }
-}
-
 @Component({
-
-  
-
   selector: 'app-diet',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="diet-app">
-      <!-- Header -->
       <header class="diet-header">
         <div class="header-content">
           <button class="back-button" routerLink="/home">
@@ -198,6 +32,7 @@ class TemporaryDietService {
             </svg>
           </button>
           <h1 class="title">Plan de Dieta</h1>
+
           <button class="reset-button" (click)="resetProgress()" title="Reiniciar progreso">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -206,15 +41,35 @@ class TemporaryDietService {
         </div>
       </header>
 
-      <!-- Content -->
+      <!-- Overlay Offline - No bloqueante -->
+      <div *ngIf="!isOnline" class="offline-indicator">
+        <div class="offline-content">
+          <div class="offline-icon">📶</div>
+          <div class="offline-text">
+            <h3>Sin conexión</h3>
+            <p>Trabajando en modo local</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje de reconexión -->
+      <div *ngIf="showReconnected" class="reconnected-indicator">
+        <div class="reconnected-content">
+          <div class="reconnected-icon">✅</div>
+          <div class="reconnected-text">
+            <h3>¡Conexión restaurada!</h3>
+            <p>Sincronizando datos...</p>
+          </div>
+        </div>
+      </div>
+
       <main class="diet-content">
         <div class="diet-wrapper">
-          
-          <!-- Header Info -->
           <div class="header-info">
             <div class="nutrition-icon">🥗</div>
             <h1>Menú Semanal Personalizado</h1>
             <p>Total de calorías aproximado por día: 1000 - 1200 Kcal.</p>
+
             <div class="progress-info" *ngIf="totalProgress > 0">
               <div class="progress-text">
                 Progreso semanal: {{ completedMeals }}/{{ totalMeals }} comidas completadas
@@ -225,27 +80,22 @@ class TemporaryDietService {
             </div>
           </div>
 
-          <!-- Lista de Menús Diarios -->
           <div class="diet-list">
             <div 
               *ngFor="let m of menu; let i = index" 
               class="diet-card"
-              [class.weekend]="m.day === 'Sábado' || m.day === 'Domingo'"
+              [class.weekend]="m.day === 'sabado' || m.day === 'domingo'"
               [class.completed]="getDayProgress(i) === 100">
               
-              <!-- Badge del día -->
               <div class="day-badge">
                 <div class="calendar-icon">📅</div>
-                <span>{{ m.day }}</span>
+                <span>{{ getDayName(m.day) }}</span>
                 <div class="day-progress" *ngIf="getDayProgress(i) > 0">
                   {{ getDayProgress(i) }}%
                 </div>
               </div>
               
-              <!-- Contenido de las comidas -->
               <div class="meals-content">
-                
-                <!-- Desayuno -->
                 <div class="meal-section breakfast" [class.completed]="m.meals.desayunoDone">
                   <div class="meal-header">
                     <div class="meal-icon">☀️</div>
@@ -261,7 +111,6 @@ class TemporaryDietService {
                   <p>{{ m.meals.desayuno }}</p>
                 </div>
                 
-                <!-- Comida -->
                 <div class="meal-section lunch" [class.completed]="m.meals.comidaDone">
                   <div class="meal-header">
                     <div class="meal-icon">🥗</div>
@@ -277,7 +126,6 @@ class TemporaryDietService {
                   <p>{{ m.meals.comida }}</p>
                 </div>
                 
-                <!-- Cena -->
                 <div class="meal-section dinner" [class.completed]="m.meals.cenaDone">
                   <div class="meal-header">
                     <div class="meal-icon">🌙</div>
@@ -292,30 +140,18 @@ class TemporaryDietService {
                   </div>
                   <p>{{ m.meals.cena }}</p>
                 </div>
-                
               </div>
               
-              <!-- Emoji decorativo para fin de semana -->
-              <div class="weekend-emoji" *ngIf="m.day === 'Sábado' || m.day === 'Domingo'">
+              <div class="weekend-emoji" *ngIf="m.day === 'sabado' || m.day === 'domingo'">
                 🎉
               </div>
             </div>
           </div>
-          
         </div>
         
         <p class="disclaimer">
           *Esta es una sugerencia general. Consulta a un nutricionista para un plan adaptado a tus necesidades específicas.
         </p>
-
-        <!-- Notificación de conexión -->
-        <div *ngIf="!isOnline" class="offline-banner">
-          ⚠️ Estás sin conexión. Algunas funciones pueden no estar disponibles.
-        </div>
-
-        <div *ngIf="isOnline && showOnlineBanner" class="online-banner">
-          ✅ Conexión establecida
-        </div>
       </main>
     </div>
   `,
@@ -410,12 +246,87 @@ class TemporaryDietService {
       text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
+    /* Indicador Offline - No bloqueante */
+    .offline-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
+      z-index: 1000;
+      animation: slideInRight 0.3s ease-out;
+      max-width: 280px;
+    }
+
+    .offline-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .offline-icon {
+      font-size: 24px;
+      animation: bounce 2s infinite;
+    }
+
+    .offline-text h3 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .offline-text p {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* Indicador de Reconexión */
+    .reconnected-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 32px rgba(76, 175, 80, 0.3);
+      z-index: 1000;
+      animation: slideInRight 0.3s ease-out;
+      max-width: 280px;
+    }
+
+    .reconnected-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .reconnected-icon {
+      font-size: 24px;
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    .reconnected-text h3 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .reconnected-text p {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
     .diet-content {
       flex: 1;
       overflow-y: auto;
       padding: 1rem;
       position: relative;
-      z-index: 1;
     }
 
     .diet-wrapper {
@@ -424,7 +335,6 @@ class TemporaryDietService {
       margin: 0 auto;
     }
 
-    /* Header Info */
     .header-info {
       text-align: center;
       margin-bottom: 24px;
@@ -503,7 +413,6 @@ class TemporaryDietService {
       transition: width 0.5s ease;
     }
 
-    /* Diet List */
     .diet-list {
       display: flex;
       flex-direction: column;
@@ -511,7 +420,6 @@ class TemporaryDietService {
       animation: fadeInUp 0.6s ease-out 0.15s backwards;
     }
 
-    /* Diet Card */
     .diet-card {
       background: linear-gradient(145deg, #ffffff 0%, #f8fdf9 100%);
       border-radius: 18px;
@@ -531,34 +439,11 @@ class TemporaryDietService {
       background: linear-gradient(145deg, #f0fff0 0%, #e8f5e9 100%);
     }
 
-    .diet-card::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 6px;
-      background: linear-gradient(135deg, #4f9d60 0%, #6bb77b 100%);
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
-    }
-
-    .diet-card:hover:not(.weekend) {
-      transform: translateX(10px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-      border-color: rgba(79, 157, 96, 0.25);
-    }
-
-    .diet-card:hover:not(.weekend)::before {
-      transform: scaleY(1);
-    }
-
     .diet-card.weekend {
       background: linear-gradient(135deg, #f0fff0 0%, #e8f5e9 100%);
       border-color: rgba(79, 157, 96, 0.2);
     }
 
-    /* Day Badge */
     .day-badge {
       display: inline-flex;
       align-items: center;
@@ -588,7 +473,6 @@ class TemporaryDietService {
       font-weight: 600;
     }
 
-    /* Meals Content */
     .meals-content {
       display: grid;
       gap: 16px;
@@ -600,7 +484,6 @@ class TemporaryDietService {
       }
     }
 
-    /* Meal Section */
     .meal-section {
       background: white;
       border-radius: 14px;
@@ -635,52 +518,14 @@ class TemporaryDietService {
       border-color: rgba(255, 167, 38, 0.3);
     }
 
-    .meal-section.breakfast.completed {
-      border-color: #ff9800;
-    }
-
-    .meal-section.breakfast .meal-header {
-      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    }
-
     .meal-section.lunch {
       border-color: rgba(102, 187, 106, 0.3);
-    }
-
-    .meal-section.lunch.completed {
-      border-color: #66bb6a;
-    }
-
-    .meal-section.lunch .meal-header {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
     }
 
     .meal-section.dinner {
       border-color: rgba(92, 107, 192, 0.3);
     }
 
-    .meal-section.dinner.completed {
-      border-color: #5c6bc0;
-    }
-
-    .meal-section.dinner .meal-header {
-      background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
-    }
-
-    .meal-section:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .meal-section p {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 500;
-      color: #555;
-      line-height: 1.7;
-    }
-
-    /* Meal Header */
     .meal-header {
       display: flex;
       align-items: center;
@@ -698,13 +543,6 @@ class TemporaryDietService {
       flex: 1;
     }
 
-    .meal-icon {
-      font-size: 22px;
-      line-height: 1;
-      animation: bounce 2s ease-in-out infinite;
-    }
-
-    /* Checkbox Styles */
     .checkbox-container {
       display: flex;
       align-items: center;
@@ -739,12 +577,6 @@ class TemporaryDietService {
       font-size: 14px;
     }
 
-    .checkbox-container:hover .checkmark {
-      border-color: #4f9d60;
-      transform: scale(1.1);
-    }
-
-    /* Weekend Emoji */
     .weekend-emoji {
       position: absolute;
       right: 20px;
@@ -755,7 +587,6 @@ class TemporaryDietService {
       pointer-events: none;
     }
 
-    /* Disclaimer */
     .disclaimer {
       margin-top: 32px;
       padding: 20px;
@@ -769,30 +600,6 @@ class TemporaryDietService {
       text-align: center;
     }
 
-    /* Connection Banners */
-    .offline-banner {
-      background: #ffa726;
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin: 1rem 0;
-      text-align: center;
-      font-weight: 500;
-      animation: slideInDown 0.3s ease-out;
-    }
-
-    .online-banner {
-      background: #4caf50;
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin: 1rem 0;
-      text-align: center;
-      font-weight: 500;
-      animation: slideInDown 0.3s ease-out;
-    }
-
-    /* Animations */
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-10px); }
@@ -809,28 +616,46 @@ class TemporaryDietService {
       }
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
-
     @keyframes pulse {
       0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.25; }
       50% { transform: scale(1.15) rotate(10deg); opacity: 0.4; }
     }
 
-    @keyframes slideInDown {
+    @keyframes slideInRight {
       from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateX(100%);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
       }
     }
 
-    /* Responsive */
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-5px);
+      }
+      60% {
+        transform: translateY(-2px);
+      }
+    }
+
+    @keyframes scaleIn {
+      0% {
+        transform: scale(0);
+      }
+      70% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
     @media (max-width: 768px) {
       .header-info {
         padding: 24px 16px;
@@ -857,73 +682,168 @@ class TemporaryDietService {
       .checkbox-container {
         align-self: flex-end;
       }
+
+      .offline-indicator,
+      .reconnected-indicator {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .nutrition-icon {
+        animation: none;
+      }
+
+      .weekend-emoji {
+        animation: none;
+      }
+
+      .offline-icon {
+        animation: none;
+      }
+
+      .reconnected-icon {
+        animation: none;
+      }
     }
   `]
 })
 export class DietComponent implements OnInit, OnDestroy {
+  menu: WeeklyMenu[] = [];
+  isOnline: boolean = navigator.onLine;
+  isUsingCachedData = false;
+  showReconnected = false;
+
   constructor(private firebaseService: FirebaseService) {}
 
-  menu: WeeklyMenu[] = [];
-  subscription!: Subscription;
-  isOnline = true;
-  showOnlineBanner = false;
-
-
-  private dietService = new TemporaryDietService();
-
-async ngOnInit(): Promise<void> {
-
-  // Orden correcto de la semana
-  const ordenSemana = [
-    "lunes",
-    "martes",
-    "miercoles",
-    "jueves",
-    "viernes",
-    "sabado",
-    "domingo"
-  ];
-
-  try {
-    // 1. Cargar menú desde Firebase
-    const data = await this.firebaseService.obtenerMenuSemanal();
-    console.log("MENÚ DESDE FIREBASE:", data);
-
-    // 2. Ordenar según la semana
-    const dataOrdenada = data.sort((a: any, b: any) =>
-      ordenSemana.indexOf(a.day) - ordenSemana.indexOf(b.day)
-    );
-
-    // 3. Mapear con flags de checklist
-    this.menu = dataOrdenada.map(d => ({
-      day: d.day,
-      meals: {
-        desayuno: d.desayuno,
-        comida: d.comida,
-        cena: d.cena,
-        desayunoDone: false,
-        comidaDone: false,
-        cenaDone: false
-      }
-    }));
-
-  } catch (error) {
-    console.error("Error cargando el menú:", error);
+  async ngOnInit(): Promise<void> {
+    this.setupConnectionListeners();
+    await this.loadMenuData();
   }
 
+  private setupConnectionListeners(): void {
+    this.isOnline = navigator.onLine;
+    
+    window.addEventListener('online', () => this.handleOnline());
+    window.addEventListener('offline', () => this.handleOffline());
+  }
 
-  // 2. Estado de conexión (esto lo dejas igual)
-  this.isOnline = navigator.onLine;
-}
+  private async loadMenuData(): Promise<void> {
+    const ordenSemana = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 
+    try {
+      const data = await this.firebaseService.obtenerMenuSemanal();
+      console.log("MENÚ CARGADO:", data);
+
+      const dataOrdenada = data.sort((a: any, b: any) =>
+        ordenSemana.indexOf(a.day) - ordenSemana.indexOf(b.day)
+      );
+
+      const cachedChecklist = await this.firebaseService.getCachedChecklist();
+      
+      this.menu = dataOrdenada.map(dayData => {
+        const dayName = dayData.day;
+        const cachedDay = cachedChecklist[dayName];
+        
+        return {
+          day: dayName,
+          meals: {
+            desayuno: dayData.desayuno,
+            comida: dayData.comida,
+            cena: dayData.cena,
+            desayunoDone: cachedDay?.desayuno || false,
+            comidaDone: cachedDay?.comida || false,
+            cenaDone: cachedDay?.cena || false
+          }
+        };
+      });
+
+      this.isUsingCachedData = false;
+
+    } catch (error) {
+      console.error("Error cargando el menú:", error);
+      this.isUsingCachedData = true;
+    }
+  }
+
+  getDayName(day: string): string {
+    const dayNames: {[key: string]: string} = {
+      'lunes': 'Lunes',
+      'martes': 'Martes',
+      'miercoles': 'Miércoles',
+      'jueves': 'Jueves',
+      'viernes': 'Viernes',
+      'sabado': 'Sábado',
+      'domingo': 'Domingo'
+    };
+    return dayNames[day] || day;
+  }
+
+  async toggleMeal(i: number, meal: keyof Meal, event: any) {
+    const completed = event.target.checked;
+
+    const updatedMenu = [...this.menu];
+    updatedMenu[i] = {
+      ...updatedMenu[i],
+      meals: {
+        ...updatedMenu[i].meals,
+        [meal]: completed
+      }
+    };
+    this.menu = updatedMenu;
+
+    const m = this.menu[i].meals;
+    const dataFirebase = {
+      desayuno: m.desayunoDone,
+      comida: m.comidaDone,
+      cena: m.cenaDone
+    };
+
+    const dayName = this.menu[i].day;
+
+    await this.firebaseService.guardarChecklist(dayName, dataFirebase);
+  }
+
+  private handleOnline() {
+    this.isOnline = true;
+    this.isUsingCachedData = false;
+    this.showReconnected = true;
+    
+    // Mostrar mensaje de reconexión por 3 segundos
+    setTimeout(() => {
+      this.showReconnected = false;
+    }, 3000);
+    
+    // Sincronizar datos pendientes
+    this.firebaseService.syncPendingData();
+    
+    // Recargar datos
+    setTimeout(() => {
+      this.loadMenuData();
+    }, 1000);
+  }
+
+  private handleOffline() {
+    this.isOnline = false;
+    this.isUsingCachedData = true;
+    this.showReconnected = false;
+  }
 
   ngOnDestroy() {
-    this.subscription?.unsubscribe();
     window.removeEventListener('online', () => this.handleOnline());
     window.removeEventListener('offline', () => this.handleOffline());
   }
 
-  // Propiedades computadas para el progreso
   get completedMeals(): number {
     return this.menu.reduce((total, day) => {
       return total + 
@@ -947,7 +867,6 @@ async ngOnInit(): Promise<void> {
     return this.completedMeals;
   }
 
-  // Método para obtener el progreso de un día específico
   getDayProgress(dayIndex: number): number {
     const day = this.menu[dayIndex];
     if (!day) return 0;
@@ -961,48 +880,22 @@ async ngOnInit(): Promise<void> {
     return Math.round((completed / 3) * 100);
   }
 
-  // Método para alternar el estado de una comida
-toggleMeal(i: number, meal: keyof Meal, event: any) {
-  const completed = event.target.checked;
-
-  this.dietService.updateMealStatus(i, meal, completed);
-
-  const m = this.menu[i].meals;
-
-  const dataFirebase = {
-    desayuno: m.desayunoDone,
-    comida: m.comidaDone,
-    cena: m.cenaDone
-  };
-
-  const dayName = this.menu[i].day;
-
-  this.firebaseService.guardarChecklist(dayName, dataFirebase)
-    .then(() => console.log("Guardado en Firebase", dayName))
-    .catch(err => console.error("Error Firebase:", err));
-}
-
-
-
-  // Método para reiniciar el progreso
   resetProgress(): void {
     if (confirm('¿Estás seguro de que quieres reiniciar todo tu progreso?')) {
-      this.dietService.resetProgress();
+      this.menu.forEach(day => {
+        day.meals.desayunoDone = false;
+        day.meals.comidaDone = false;
+        day.meals.cenaDone = false;
+      });
+      
+      this.menu.forEach(day => {
+        const data = {
+          desayuno: false,
+          comida: false,
+          cena: false
+        };
+        this.firebaseService.guardarChecklist(day.day, data);
+      });
     }
-  }
-
-  private handleOnline() {
-    this.isOnline = true;
-    this.showOnlineBanner = true;
-    
-    // Ocultar banner después de 3 segundos
-    setTimeout(() => {
-      this.showOnlineBanner = false;
-    }, 3000);
-  }
-
-  private handleOffline() {
-    this.isOnline = false;
-    this.showOnlineBanner = false;
   }
 }

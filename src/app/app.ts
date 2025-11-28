@@ -8,12 +8,7 @@ import { OfflineService } from './services/offline.service';
   imports: [RouterOutlet, CommonModule],
   template: `
     <!-- Offline Indicator GLOBAL -->
-    <div *ngIf="(offlineService.isOnline$ | async) === false" class="offline-banner">
-      <div class="offline-content">
-        <span class="offline-icon">📶</span>
-        <span class="offline-text">Modo sin conexión - Los datos se cargarán desde la caché</span>
-      </div>
-    </div>
+ 
     
     <router-outlet></router-outlet>
   `,
