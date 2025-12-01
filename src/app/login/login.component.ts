@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { UserDataService } from '../services/userData.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="login-app">
       <!-- Content -->
@@ -79,7 +80,8 @@ import { AuthService } from '../services/auth.service';
 
           <!-- Enlace "¿Olvidaste tu contraseña?" -->
           <div class="forgot-password-link">
-            <a href="#" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
+            <a routerLink="/olvide-password" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
+            <a routerLink="/register" (click)="register($event)">Registrarse</a>
           </div>
         </div>
       </main>
@@ -522,42 +524,53 @@ export class LoginComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService   
+    private authService: AuthService,
+    private userDataService: UserDataService   
   ) {}
 
   /**
    * Intenta iniciar sesión con el correo/usuario y la contraseña.
    */
-  login() {
-    this.errorMessage = '';
+login() {
+  this.errorMessage = '';
 
-    this.authService.login(this.email, this.password)
-      .then(() => {
-        console.log('Login correctamente');
-        this.router.navigateByUrl('/home', { replaceUrl: true });
-      })
-      .catch((err) => {
-        console.error(err);
-        this.errorMessage = this.getFirebaseError(err.code);
-      });
-  }
+  this.authService.login(this.email, this.password)
+    .then(async (result) => {
+      console.log('Login correctamente');
+
+      const uid = result.user?.uid;
+      await this.userDataService.createUserDataStructure(uid);
+
+      this.router.navigateByUrl('/home', { replaceUrl: true });
+    })
+    .catch((err) => {
+      console.error(err);
+      this.errorMessage = this.getFirebaseError(err.code);
+    });
+}
+
 
   /**
    * Maneja el inicio de sesión a través de la cuenta de Google.
    */
-  loginWithGoogle() {
-    this.errorMessage = '';
+loginWithGoogle() {
+  this.errorMessage = '';
 
-    this.authService.loginGoogle()
-      .then(() => {
-        console.log('Login con Google exitoso');
-        this.router.navigateByUrl('/home', { replaceUrl: true });
-      })
-      .catch((err) => {
-        console.error(err);
-        this.errorMessage = this.getFirebaseError(err.code);
-      });
-  }
+  this.authService.loginGoogle()
+    .then(async (result) => {
+      console.log('Login con Google exitoso');
+
+      const uid = result.user?.uid;
+      await this.userDataService.createUserDataStructure(uid);
+
+      this.router.navigateByUrl('/home', { replaceUrl: true });
+    })
+    .catch((err) => {
+      console.error(err);
+      this.errorMessage = this.getFirebaseError(err.code);
+    });
+}
+
 
     getFirebaseError(code: string): string {
     switch (code) {
@@ -583,5 +596,9 @@ export class LoginComponent {
     event.preventDefault();
     console.log('Enlace para ¿Olvidaste tu contraseña? pulsado.');
     // this.router.navigateByUrl('/forgot-password');
+  }
+    register(event: Event) {
+    event.preventDefault();
+    console.log('Enlace para register pulsado.');
   }
 }

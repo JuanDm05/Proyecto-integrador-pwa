@@ -789,30 +789,33 @@ export class DietComponent implements OnInit, OnDestroy {
     return dayNames[day] || day;
   }
 
-  async toggleMeal(i: number, meal: keyof Meal, event: any) {
-    const completed = event.target.checked;
+// En el método toggleMeal
+async toggleMeal(i: number, meal: keyof Meal, event: any) {
+  const completed = event.target.checked;
 
-    const updatedMenu = [...this.menu];
-    updatedMenu[i] = {
-      ...updatedMenu[i],
-      meals: {
-        ...updatedMenu[i].meals,
-        [meal]: completed
-      }
-    };
-    this.menu = updatedMenu;
+  const updatedMenu = [...this.menu];
+  updatedMenu[i] = {
+    ...updatedMenu[i],
+    meals: {
+      ...updatedMenu[i].meals,
+      [meal]: completed
+    }
+  };
+  this.menu = updatedMenu;
 
-    const m = this.menu[i].meals;
-    const dataFirebase = {
-      desayuno: m.desayunoDone,
-      comida: m.comidaDone,
-      cena: m.cenaDone
-    };
+  const m = this.menu[i].meals;
+  
+  // Asegurar que siempre sean booleanos (no undefined)
+  const dataFirebase = {
+    desayuno: Boolean(m.desayunoDone), // Convierte a boolean explícitamente
+    comida: Boolean(m.comidaDone),
+    cena: Boolean(m.cenaDone)
+  };
 
-    const dayName = this.menu[i].day;
+  const dayName = this.menu[i].day;
 
-    await this.firebaseService.guardarChecklist(dayName, dataFirebase);
-  }
+  await this.firebaseService.guardarChecklist(dayName, dataFirebase);
+}
 
   private handleOnline() {
     this.isOnline = true;
