@@ -1,7 +1,8 @@
-import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, isDevMode, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
+import { HttpClientModule } from '@angular/common/http'; // Cambia esto
 
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
@@ -20,8 +21,11 @@ export const appConfig: ApplicationConfig = {
 
     // 🔗 Routing
     provideRouter(routes),
+    
+    // 🌐 HTTP Client (versión para Angular < 15.2)
+    importProvidersFrom(HttpClientModule), // Usa esta línea
 
-    // 🌐 Service Worker / PWA
+    // 📱 Service Worker / PWA
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',

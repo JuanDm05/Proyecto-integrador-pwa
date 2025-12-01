@@ -16,7 +16,7 @@ import { UserDataService } from '../services/userData.service';
         <div class="login-container">
           <!-- Contenedor del Logo (Manzana) -->
           <div class="logo-wrapper">
-            <img src="assets/manzanaverde.png" alt="Logo CoachChatbot" class="app-logo">
+       <img src="https://i.ibb.co/nq7Zh7HQ/manzana.png" class="app-logo" alt="manzana" border="0">
           </div>
 
           <!-- Mensaje de Bienvenida -->
@@ -32,7 +32,6 @@ import { UserDataService } from '../services/userData.service';
             <!-- Lista de Inputs -->
             <div class="input-list">
               <div class="input-item" [class.item-has-focus]="emailFocused">
-                <span class="input-icon">📧</span>
                 <input 
                   type="email" 
                   [(ngModel)]="email" 
@@ -46,7 +45,6 @@ import { UserDataService } from '../services/userData.service';
               </div>
               
               <div class="input-item" [class.item-has-focus]="passwordFocused">
-                <span class="input-icon">🔒</span>
                 <input 
                   type="password" 
                   [(ngModel)]="password" 
@@ -72,10 +70,12 @@ import { UserDataService } from '../services/userData.service';
           </div>
 
           <!-- Botón de Google (Secundario) -->
-          <button class="google-button" (click)="loginWithGoogle()">
-            <span class="google-icon">🔍</span>
-            <span class="button-text">Acceder con Google</span>
-          </button>
+        <button class="google-button" (click)="loginWithGoogle()">
+  <span class="google-icon">
+    <img src="https://i.ibb.co/vCGQWrPF/cromo.png" alt="Google Logo" class="google-logo">
+  </span>
+  <span class="button-text">Acceder con Google</span>
+</button>
 
 
           <!-- Enlace "¿Olvidaste tu contraseña?" -->
@@ -94,6 +94,79 @@ import { UserDataService } from '../services/userData.service';
       height: 100vh;
       background: #f7fbf7;
     }
+    /* Estilos para el logo de Google */
+.google-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.google-button {
+  background: white;
+  color: #333;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  height: 58px;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+  animation: fadeInUp 0.6s ease-out 0.5s backwards;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.google-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* Versión mejorada con más espacio entre icono y texto */
+.google-button {
+  padding: 0 24px;
+}
+
+/* Para mantener la alineación vertical perfecta */
+.google-button .button-text {
+  line-height: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .google-button {
+    height: 52px;
+    font-size: 17px;
+    gap: 10px;
+  }
+  
+  .google-logo {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .google-button {
+    height: 48px;
+    font-size: 16px;
+    gap: 8px;
+  }
+  
+  .google-logo {
+    width: 16px;
+    height: 16px;
+  }
+}
 
     .login-content {
       flex: 1;
