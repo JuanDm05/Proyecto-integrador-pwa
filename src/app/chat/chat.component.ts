@@ -123,7 +123,7 @@ import { ChatAIService } from '../services/chat-ai';
     </div>
   `,
   styles: [`
-    .chat-app {
+   .chat-app {
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -135,6 +135,8 @@ import { ChatAIService } from '../services/chat-ai';
       background: linear-gradient(135deg, #4f9d60 0%, #3a7547 100%);
       padding: 15px 20px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      flex-shrink: 0;
     }
 
     .header-content {
@@ -204,6 +206,8 @@ import { ChatAIService } from '../services/chat-ai';
       flex: 1;
       overflow: hidden;
       background: linear-gradient(180deg, #f8fdf8 0%, #ffffff 100%);
+      position: relative;
+      min-height: 0; /* Importante para flexbox */
     }
 
     .chat-box {
@@ -213,6 +217,7 @@ import { ChatAIService } from '../services/chat-ai';
       display: flex;
       flex-direction: column;
       gap: 20px;
+      position: relative;
     }
 
     /* Welcome Message */
@@ -272,6 +277,7 @@ import { ChatAIService } from '../services/chat-ai';
       gap: 12px;
       max-width: 85%;
       animation: fadeIn 0.3s ease;
+      flex-shrink: 0;
     }
 
     @keyframes fadeIn {
@@ -308,6 +314,8 @@ import { ChatAIService } from '../services/chat-ai';
     .message-content {
       display: flex;
       flex-direction: column;
+      flex: 1;
+      min-width: 0; /* Para que el texto no desborde */
     }
 
     .user .message-content {
@@ -320,8 +328,10 @@ import { ChatAIService } from '../services/chat-ai';
       font-size: 16px;
       line-height: 1.5;
       word-wrap: break-word;
+      overflow-wrap: break-word;
       max-width: 100%;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      white-space: pre-line; /* Para mantener saltos de línea */
     }
 
     .bot .bubble {
@@ -379,12 +389,51 @@ import { ChatAIService } from '../services/chat-ai';
       50% { transform: translateY(-5px); }
     }
 
+    /* Botón para scroll al final */
+    .scroll-to-bottom-btn {
+      position: fixed;
+      bottom: 150px;
+      right: 30px;
+      background: linear-gradient(135deg, #4f9d60 0%, #3a7547 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      animation: slideUp 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    .scroll-to-bottom-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     /* Footer */
     .chat-footer {
       background: white;
       border-top: 1px solid #e8f5e9;
       padding: 15px 20px;
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
     }
 
     .quick-actions {
@@ -440,6 +489,7 @@ import { ChatAIService } from '../services/chat-ai';
       background: white;
       color: #333;
       transition: all 0.3s;
+      overflow-y: auto;
     }
 
     textarea:focus {
@@ -556,29 +606,50 @@ import { ChatAIService } from '../services/chat-ai';
         width: 100%;
         margin-top: 10px;
       }
+      
+      .scroll-to-bottom-btn {
+        right: 15px;
+        bottom: 140px;
+        font-size: 12px;
+        padding: 8px 15px;
+      }
     }
 
     /* Scrollbar */
     .chat-box::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
     }
 
     .chat-box::-webkit-scrollbar-track {
       background: #f1f1f1;
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .chat-box::-webkit-scrollbar-thumb {
       background: #c8e6c9;
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .chat-box::-webkit-scrollbar-thumb:hover {
       background: #4f9d60;
     }
+
+    textarea::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    textarea::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    textarea::-webkit-scrollbar-thumb {
+      background: #c8e6c9;
+      border-radius: 3px;
+    }
   `]
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
   @ViewChild('messageInput') private messageInput!: ElementRef;
 
@@ -593,41 +664,30 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.addBotMessage('¡Hola! Soy CoachFit, tu entrenador personal virtual. 🤖\n\n¿En qué puedo ayudarte hoy? Puedes preguntarme sobre:\n• Rutinas de entrenamiento 💪\n• Consejos de nutrición 🍎\n• Ejercicios específicos 🏋️‍♂️\n• Motivación y tips 🌟');
   }
 
-  ngAfterViewChecked() {
-    this.scrollToBottom();
+
+  sendMessage() {
+    const text = this.userMessage.trim();
+    if (!text) return;
+
+    // Agregar mensaje del usuario
+    this.addUserMessage(text);
+    this.userMessage = '';
+    this.isTyping = true;
+
+    // Enviar a la IA
+    this.chatAI.sendMessage(text).subscribe({
+      next: (response) => {
+        this.isTyping = false;
+        this.addBotMessage(response.reply);
+      },
+      error: (error) => {
+        console.error('Error:', error);
+        this.isTyping = false;
+        this.addBotMessage('¡Ups! Tuve un pequeño problema. ¿Podrías intentar de nuevo? 😊\n\nMientras tanto, te recomiendo: mantener consistencia en tu entrenamiento y alimentación balanceada. 💪');
+      }
+    });
   }
 
- // En el método sendMessage() del componente:
-sendMessage() {
-  const text = this.userMessage.trim();
-  if (!text) return;
-
-  // Agregar mensaje del usuario
-  this.addUserMessage(text);
-  this.userMessage = '';
-  this.isTyping = true;
-
-  // Resetear el textarea height
-  this.messageInput.nativeElement.style.height = 'auto';
-
-  // Enviar a la IA
-  this.chatAI.sendMessage(text).subscribe({
-    next: (response) => {
-      this.isTyping = false;
-      this.addBotMessage(response.reply);
-      // Enfocar el input después de recibir respuesta
-      setTimeout(() => {
-        this.messageInput.nativeElement.focus();
-      }, 100);
-    },
-    error: (error) => {
-      console.error('Error en el chat:', error);
-      this.isTyping = false;
-      this.addBotMessage('¡Ups! Parece que hay un problema temporal. Mientras tanto, recuerda: ¡La constancia en el entrenamiento y la alimentación balanceada son tus mejores aliados! 💪\n\n¿Hay algo más específico sobre fitness que te gustaría saber?');
-      this.messageInput.nativeElement.focus();
-    }
-  });
-}
   quickQuestion(question: string) {
     this.userMessage = question;
     setTimeout(() => {
