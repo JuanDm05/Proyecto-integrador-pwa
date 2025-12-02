@@ -10,6 +10,6 @@
     appId: "1:960881026186:web:11aa629feb93acd5117973"
   },
   
-  //  CORRECTO: Lee de variable de entorno de Vercel
-  geminiApiKey: process.env['GEMINI_API_KEY'] || ''
+  // Para Vercel: usa placeholder que será reemplazado
+  geminiApiKey: "GEMINI_API_KEY_TO_BE_REPLACED"
 };
