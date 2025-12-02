@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GeminiService {
   // Tu API Key
-  private apiKey = 'AIzaSyBioKiydivaaHNufa3h_SmLb0rKHtWzQbI';
+    private apiKey = environment.geminiApiKey;
   
   // ✅ MODELO MÁS BÁSICO Y GRATUITO - Gemini 2.0 Flash Lite
   private apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${this.apiKey}`;
