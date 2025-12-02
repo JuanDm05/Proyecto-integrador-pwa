@@ -1,4 +1,4 @@
-﻿export const environment = {
+export const environment = {
   production: true,
   
   firebaseConfig: {
@@ -10,6 +10,6 @@
     appId: "1:960881026186:web:11aa629feb93acd5117973"
   },
   
-  // Para Vercel: usa placeholder que será reemplazado
-  geminiApiKey: "GEMINI_API_KEY_TO_BE_REPLACED"
+  // Para Vercel: usa placeholder que ser� reemplazado
+  geminiApiKey: "$GEMINI_API_KEY"
 };
