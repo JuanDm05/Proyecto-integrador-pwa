@@ -11,25 +11,28 @@ import { UserDataService } from '../services/userData.service';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="login-app">
-      <!-- Content -->
       <main class="login-content">
         <div class="login-container">
-          <!-- Contenedor del Logo (Manzana) -->
           <div class="logo-wrapper">
-       <img src="https://i.ibb.co/nq7Zh7HQ/manzana.png" class="app-logo" alt="manzana" border="0">
+            <img src="https://i.ibb.co/nq7Zh7HQ/manzana.png" class="app-logo" alt="manzana" border="0">
           </div>
 
-          <!-- Mensaje de Bienvenida -->
           <div class="welcome-message">
             Bienvenido a <span class="app-name">FitIaApp</span>
           </div>
 
-          <!-- Título Principal -->
           <h1 class="title">Iniciar Sesión</h1>
 
-          <!-- Formulario de Login -->
           <form class="login-form" (ngSubmit)="login()">
-            <!-- Lista de Inputs -->
+            
+            <div class="error-alert" *ngIf="errorMessage">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon-svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ errorMessage }}</span>
+            </div>
             <div class="input-list">
               <div class="input-item" [class.item-has-focus]="emailFocused">
                 <input 
@@ -58,27 +61,22 @@ import { UserDataService } from '../services/userData.service';
               </div>
             </div>
 
-            <!-- Botón Principal "Entrar" -->
             <button type="submit" class="main-login-button" [disabled]="!email || !password">
               <span class="button-text">Entrar</span>
             </button>
           </form>
 
-          <!-- Separador -->
           <div class="separator-text">
             o continuar con
           </div>
 
-          <!-- Botón de Google (Secundario) -->
-        <button class="google-button" (click)="loginWithGoogle()">
-  <span class="google-icon">
-    <img src="https://i.ibb.co/vCGQWrPF/cromo.png" alt="Google Logo" class="google-logo">
-  </span>
-  <span class="button-text">Acceder con Google</span>
-</button>
+          <button class="google-button" (click)="loginWithGoogle()">
+            <span class="google-icon">
+              <img src="https://i.ibb.co/vCGQWrPF/cromo.png" alt="Google Logo" class="google-logo">
+            </span>
+            <span class="button-text">Acceder con Google</span>
+          </button>
 
-
-          <!-- Enlace "¿Olvidaste tu contraseña?" -->
           <div class="forgot-password-link">
             <a routerLink="/olvide-password" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
             <a routerLink="/register" (click)="register($event)">Registrarse</a>
@@ -94,86 +92,114 @@ import { UserDataService } from '../services/userData.service';
       height: 100vh;
       background: #f7fbf7;
     }
+    
     /* Estilos para el logo de Google */
-.google-logo {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
+    .google-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    }
 
-.google-button {
-  background: white;
-  color: #333;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-radius: 14px;
-  height: 58px;
-  font-size: 17px;
-  font-weight: 700;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  letter-spacing: 0.3px;
-  animation: fadeInUp 0.6s ease-out 0.5s backwards;
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
+    .google-button {
+      background: white;
+      color: #333;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-radius: 14px;
+      height: 58px;
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      animation: fadeInUp 0.6s ease-out 0.5s backwards;
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
 
-.google-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
+    .google-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
 
-/* Versión mejorada con más espacio entre icono y texto */
-.google-button {
-  padding: 0 24px;
-}
+    .google-button {
+      padding: 0 24px;
+    }
 
-/* Para mantener la alineación vertical perfecta */
-.google-button .button-text {
-  line-height: 1;
-}
+    .google-button .button-text {
+      line-height: 1;
+    }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .google-button {
-    height: 52px;
-    font-size: 17px;
-    gap: 10px;
-  }
-  
-  .google-logo {
-    width: 18px;
-    height: 18px;
-  }
-}
+    /* ESTILOS DE LA ALERTA DE ERROR (NUEVO) */
+    .error-alert {
+      background-color: #fef2f2;
+      border: 1px solid #fee2e2;
+      color: #dc2626;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
 
-@media (max-width: 480px) {
-  .google-button {
-    height: 48px;
-    font-size: 16px;
-    gap: 8px;
-  }
-  
-  .google-logo {
-    width: 16px;
-    height: 16px;
-  }
-}
+    .error-icon-svg {
+      flex-shrink: 0;
+      color: #ef4444;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+    /* FIN ESTILOS ALERTA */
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .google-button {
+        height: 52px;
+        font-size: 17px;
+        gap: 10px;
+      }
+      
+      .google-logo {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .google-button {
+        height: 48px;
+        font-size: 16px;
+        gap: 8px;
+      }
+      
+      .google-logo {
+        width: 16px;
+        height: 16px;
+      }
+    }
 
     .login-content {
       flex: 1;
       overflow-y: auto;
     }
 
-    /* Contenedor principal con diseño mejorado */
     .login-container {
       padding: 40px 32px;
       display: flex;
@@ -203,7 +229,6 @@ import { UserDataService } from '../services/userData.service';
       z-index: 1;
     }
 
-    /* Logo moderno con animación */
     .logo-wrapper {
       margin: 24px auto 36px auto;
       padding: 20px;
@@ -248,7 +273,6 @@ import { UserDataService } from '../services/userData.service';
       50% { transform: translateY(-6px); }
     }
 
-    /* Mensaje de bienvenida elegante */
     .welcome-message {
       text-align: center;
       font-size: 18px;
@@ -270,7 +294,6 @@ import { UserDataService } from '../services/userData.service';
       display: inline-block;
     }
 
-    /* Título con gradiente moderno */
     .title {
       font-size: 32px;
       font-weight: 800;
@@ -296,12 +319,10 @@ import { UserDataService } from '../services/userData.service';
       }
     }
 
-    /* Form */
     .login-form {
       width: 100%;
     }
 
-    /* Inputs modernos con mejor legibilidad */
     .input-list {
       width: 100%;
       margin-bottom: 30px;
@@ -328,22 +349,9 @@ import { UserDataService } from '../services/userData.service';
       transform: translateY(-2px);
     }
 
-    .input-item.item-has-focus .input-icon {
-      transform: scale(1.1);
-      color: #3a7547;
-    }
-
     .input-item:hover:not(.item-has-focus) {
       border-color: rgba(79, 157, 96, 0.15);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    .input-icon {
-      color: #4f9d60;
-      font-size: 20px;
-      margin-right: 14px;
-      filter: drop-shadow(0 2px 4px rgba(79, 157, 96, 0.1));
-      transition: all 0.3s ease;
     }
 
     .form-input {
@@ -362,7 +370,6 @@ import { UserDataService } from '../services/userData.service';
       opacity: 0.7;
     }
 
-    /* Botón principal premium */
     .main-login-button {
       background: linear-gradient(135deg, #4f9d60 0%, #6bb77b 100%);
       border: none;
@@ -398,7 +405,6 @@ import { UserDataService } from '../services/userData.service';
       transform: none;
     }
 
-    /* Separador moderno */
     .separator-text {
       color: #555;
       font-size: 15px;
@@ -429,48 +435,6 @@ import { UserDataService } from '../services/userData.service';
       right: 0;
     }
 
-    /* Botón Google mejorado */
-    .google-button {
-      background: white;
-      color: #333;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-radius: 14px;
-      height: 58px;
-      font-size: 17px;
-      font-weight: 700;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
-      letter-spacing: 0.3px;
-      animation: fadeInUp 0.6s ease-out 0.5s backwards;
-      position: relative;
-      overflow: hidden;
-      width: 100%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .google-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      border-color: rgba(79, 157, 96, 0.3);
-    }
-
-    .google-button:active {
-      transform: translateY(-1px);
-    }
-
-    .google-icon {
-      font-size: 20px;
-    }
-
-    .button-text {
-      font-weight: 700;
-    }
-
-    /* Link mejorado con mejor legibilidad */
     .forgot-password-link {
       width: 100%;
       text-align: center;
@@ -500,7 +464,6 @@ import { UserDataService } from '../services/userData.service';
       transform: scale(0.98);
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .login-container {
         padding: 24px 20px;
@@ -573,7 +536,6 @@ import { UserDataService } from '../services/userData.service';
       }
     }
 
-    /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -601,51 +563,39 @@ export class LoginComponent {
     private userDataService: UserDataService   
   ) {}
 
-  /**
-   * Intenta iniciar sesión con el correo/usuario y la contraseña.
-   */
-login() {
-  this.errorMessage = '';
+  login() {
+    this.errorMessage = '';
 
-  this.authService.login(this.email, this.password)
-    .then(async (result) => {
-      console.log('Login correctamente');
+    this.authService.login(this.email, this.password)
+      .then(async (result) => {
+        console.log('Login correctamente');
+        const uid = result.user?.uid;
+        await this.userDataService.createUserDataStructure(uid);
+        this.router.navigateByUrl('/home', { replaceUrl: true });
+      })
+      .catch((err) => {
+        console.error(err);
+        this.errorMessage = this.getFirebaseError(err.code);
+      });
+  }
 
-      const uid = result.user?.uid;
-      await this.userDataService.createUserDataStructure(uid);
+  loginWithGoogle() {
+    this.errorMessage = '';
 
-      this.router.navigateByUrl('/home', { replaceUrl: true });
-    })
-    .catch((err) => {
-      console.error(err);
-      this.errorMessage = this.getFirebaseError(err.code);
-    });
-}
+    this.authService.loginGoogle()
+      .then(async (result) => {
+        console.log('Login con Google exitoso');
+        const uid = result.user?.uid;
+        await this.userDataService.createUserDataStructure(uid);
+        this.router.navigateByUrl('/home', { replaceUrl: true });
+      })
+      .catch((err) => {
+        console.error(err);
+        this.errorMessage = this.getFirebaseError(err.code);
+      });
+  }
 
-
-  /**
-   * Maneja el inicio de sesión a través de la cuenta de Google.
-   */
-loginWithGoogle() {
-  this.errorMessage = '';
-
-  this.authService.loginGoogle()
-    .then(async (result) => {
-      console.log('Login con Google exitoso');
-
-      const uid = result.user?.uid;
-      await this.userDataService.createUserDataStructure(uid);
-
-      this.router.navigateByUrl('/home', { replaceUrl: true });
-    })
-    .catch((err) => {
-      console.error(err);
-      this.errorMessage = this.getFirebaseError(err.code);
-    });
-}
-
-
-    getFirebaseError(code: string): string {
+  getFirebaseError(code: string): string {
     switch (code) {
       case 'auth/invalid-email':
         return 'El correo no es válido.';
@@ -662,15 +612,13 @@ loginWithGoogle() {
     }
   }
 
-  /**
-   * Navega a la página de recuperación de contraseña.
-   */
   forgotPassword(event: Event) {
     event.preventDefault();
     console.log('Enlace para ¿Olvidaste tu contraseña? pulsado.');
     // this.router.navigateByUrl('/forgot-password');
   }
-    register(event: Event) {
+
+  register(event: Event) {
     event.preventDefault();
     console.log('Enlace para register pulsado.');
   }
