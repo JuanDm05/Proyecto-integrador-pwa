@@ -2,24 +2,30 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-// Ya no necesitamos environment.secrets para la key de Gemini
+// Eliminamos la importación de 'environment' si solo se usaba para geminiApiKey.
+// Si necesitas otras variables de entorno (como las de Firebase), puedes mantenerla.
+// import { environment } from '../../environments/environment.secrets'; 
 
 @Injectable({
   providedIn: 'root'
 })
 export class GeminiService {
   
-  // AHORA APUNTAMOS A NUESTRA PROPIA API EN VERCEL
-  // La ruta relativa '/api/gemini' funciona automáticamente en producción
+  // ❌ ELIMINADO: Ya no necesitamos la API Key ni la lógica para construir la URL de Google aquí.
+  // private apiKey = environment.geminiApiKey; 
+  
+  // 🟢 CAMBIO PRINCIPAL: Apuntamos al endpoint interno de Vercel.
   private apiUrl = '/api/gemini'; 
 
   constructor(private http: HttpClient) {}
 
   sendMessage(message: string): Observable<any> {
+    // Validación
     if (!message.trim()) {
       return throwError(() => new Error('Mensaje vacío'));
     }
 
+    // Prompt más simple y directo
     const body = {
       contents: [{
         role: "user",
@@ -39,40 +45,60 @@ export class GeminiService {
       'Content-Type': 'application/json'
     });
 
-    console.log('Enviando solicitud al servidor seguro (Vercel)...');
+    // Cambiamos el log para reflejar que se usa el proxy
+    console.log('Enviando solicitud a través de Vercel API...');
     
+    // El método POST ahora se dirige a tu Serverless Function (/api/gemini)
     return this.http.post(this.apiUrl, body, { headers }).pipe(
       catchError(error => {
-        console.error('Error en la comunicación con el servidor:', error);
+        console.error('Error al contactar el backend:', error);
+        
+        // Log detallado para debugging
+        if (error.error) {
+          console.error('Error details:', JSON.stringify(error.error, null, 2));
+        }
+        
         return throwError(() => this.handleApiError(error));
       })
     );
   }
 
   private handleApiError(error: any): Error {
-    // Los códigos de error ahora vienen de tu servidor Vercel
-    if (error.status === 500) {
-      return new Error('Error interno del servidor o Key no configurada.');
-    } else if (error.status === 404) {
-      return new Error('No se encontró el endpoint /api/gemini');
+    // Los códigos de error ahora provienen de tu servidor Vercel, no directamente de Google.
+    console.log('Status:', error.status);
+    console.log('URL:', error.url);
+    
+    if (error.status === 404) {
+      return new Error('No se encontró el Serverless Function (/api/gemini). Verifica la ruta.');
+    } else if (error.status === 500) {
+      return new Error('Error interno del servidor de Vercel. (Posiblemente la API Key no está cargada correctamente en Vercel).');
+    } else if (error.status === 400) {
+       // Este error 400 podría ser devuelto por Vercel si Gemini lo envió primero
+       const errorMsg = error.error?.error?.message || 'Solicitud incorrecta o Key inválida reportada por el proxy.';
+       return new Error(`Error 400: ${errorMsg}`);
     }
-    // Puedes mantener la lógica original si tu proxy devuelve los mismos códigos
+    
     return new Error(`Error ${error.status}: ${error.message || 'Desconocido'}`);
   }
 
+  // Método para probar conexión
   testConnection(): Observable<any> {
     const testBody = {
       contents: [{
         role: "user",
         parts: [{
-          text: "Hola"
+          text: "Hola, responde con 'OK' si estás funcionando."
         }]
       }],
       generationConfig: {
-        maxOutputTokens: 5
+        maxOutputTokens: 10
       }
     };
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
     return this.http.post(this.apiUrl, testBody, { headers });
   }
 }
