@@ -45,40 +45,45 @@ async obtenerMenuSemanal(): Promise<any[]> {
     const ref = collection(this.db, 'menus');
     const snapshot = await getDocs(ref);
 
+    console.log(`🔍 Colección 'menus' encontrada con ${snapshot.size} documentos`);
+    
     const menu: any[] = [];
     
-    // Definir los días que queremos (con mayúsculas iniciales)
-    const diasEsperadosMayusculas = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
+    // DEBUG: Mostrar todos los documentos encontrados
+    snapshot.forEach(doc => {
+      console.log(`📄 Documento ID: "${doc.id}", Datos:`, doc.data());
+    });
+    
+    // Los IDs de tus documentos están en minúsculas: "lunes", "martes", etc.
+    const diasEsperadosMinusculas = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     
     snapshot.forEach(doc => {
-      const id = doc.id;
+      const id = doc.id; // Esto será "lunes", "martes", etc. (en minúsculas)
       const data = doc.data();
       
-      // Solo procesar si está en la lista de días con mayúsculas
-      if (diasEsperadosMayusculas.includes(id)) {
+      // Solo procesar si está en la lista de días esperados (en minúsculas)
+      if (diasEsperadosMinusculas.includes(id)) {
         menu.push({
-          day: id.toLowerCase(), // Convertir a minúsculas para consistencia
+          day: id, // Mantener en minúsculas
           desayuno: data['desayuno'] || 'Comida no definida',
           comida: data['comida'] || 'Comida no definida', 
           cena: data['cena'] || 'Comida no definida'
         });
-        console.log(`✅ Agregado: ${id}`);
+        console.log(`✅ Agregado menú para: ${id}`);
       } else {
-        console.warn(`⚠️ Ignorado: ${id} (no es un día esperado con mayúsculas)`);
+        console.warn(`⚠️ Ignorado: "${id}" (no es un día esperado en minúsculas)`);
       }
     });
 
-    console.log('🔥 Menú procesado:', menu);
+    console.log('🔥 Menú procesado desde Firestore:', menu);
 
-    // Si faltan días, agregarlos
+    // Si faltan días, agregarlos con valores por defecto
     if (menu.length < 7) {
       const diasObtenidos = menu.map(m => m.day);
-      const diasFaltantes = diasEsperadosMayusculas
-        .map(d => d.toLowerCase())
-        .filter(dia => !diasObtenidos.includes(dia));
+      const diasFaltantes = diasEsperadosMinusculas.filter(dia => !diasObtenidos.includes(dia));
       
       if (diasFaltantes.length > 0) {
-        console.warn(`⚠️ Faltan días: ${diasFaltantes.join(', ')} (agregando por defecto)`);
+        console.warn(`⚠️ Faltan días en Firestore: ${diasFaltantes.join(', ')} (agregando por defecto)`);
         
         for (const dia of diasFaltantes) {
           menu.push({
@@ -91,17 +96,46 @@ async obtenerMenuSemanal(): Promise<any[]> {
       }
     }
 
-    // Ordenar
+    // Ordenar por días de la semana
     const ordenDias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     menu.sort((a, b) => ordenDias.indexOf(a.day) - ordenDias.indexOf(b.day));
 
+    console.log('📋 Menú final ordenado:', menu);
+    
     await this.saveToCache(this.MENU_CACHE_KEY, menu);
     return menu;
 
   } catch (error) {
-    console.error('❌ Error cargando menú:', error);
-    throw error;
+    console.error('❌ Error cargando menú desde Firestore:', error);
+    
+    // Si hay error, usar menú simulado temporalmente
+    const menuSimulado = this.getMenuSimulado();
+    await this.saveToCache(this.MENU_CACHE_KEY, menuSimulado);
+    return menuSimulado;
   }
+}
+
+// Método auxiliar para menú simulado (solo para emergencias)
+private getMenuSimulado(): any[] {
+  console.warn('⚠️ Usando menú simulado (fallback)');
+  
+  const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+  const comidasSimuladas = [
+    { desayuno: 'Avena con frutas', comida: 'Pollo con verduras', cena: 'Sopa de verduras' },
+    { desayuno: 'Yogur con granola', comida: 'Pescado al horno', cena: 'Ensalada mixta' },
+    { desayuno: 'Tostadas integrales', comida: 'Lentejas estofadas', cena: 'Tortilla de espinacas' },
+    { desayuno: 'Batido de proteínas', comida: 'Arroz con pollo', cena: 'Crema de calabaza' },
+    { desayuno: 'Huevos revueltos', comida: 'Pasta integral', cena: 'Salmón a la plancha' },
+    { desayuno: 'Tortitas de avena', comida: 'Hamburguesa de lentejas', cena: 'Pizza casera ligera' },
+    { desayuno: 'Fruta fresca variada', comida: 'Paella de mariscos', cena: 'Sándwich vegetal' }
+  ];
+  
+  return dias.map((dia, index) => ({
+    day: dia,
+    desayuno: comidasSimuladas[index].desayuno,
+    comida: comidasSimuladas[index].comida,
+    cena: comidasSimuladas[index].cena
+  }));
 }
 
 async guardarChecklist(dia: string, data: { desayuno: boolean, comida: boolean, cena: boolean }): Promise<void> {
