@@ -1,6 +1,7 @@
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -893,12 +894,15 @@ export class HomeComponent implements OnInit {
   showMenu = false;
   showLogoutConfirm = false;
   
-  // Variables para detección de plataforma
   isIOS = false;
   isAndroid = false;
   isMobile = false;
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private authService: AuthService, // Inyecta AuthService
+    private router: Router // Inyecta Router
+  ) {}
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -908,19 +912,9 @@ export class HomeComponent implements OnInit {
 
   detectPlatform() {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    
-    // Detectar iOS
     this.isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
-    
-    // Detectar Android
     this.isAndroid = /android/i.test(userAgent);
-    
-    // Detectar si es móvil
     this.isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    
-    // Para testing, puedes forzar una plataforma:
-    // this.isIOS = true; // Para ver estilo iOS
-    // this.isAndroid = true; // Para ver estilo Android
   }
 
   presentMenu(event: Event) {
@@ -941,12 +935,25 @@ export class HomeComponent implements OnInit {
     this.showLogoutConfirm = false;
   }
 
-  confirmLogout() {
-    // Limpiar datos de sesión
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Navegar al login
-    window.location.href = '/login';
+  async confirmLogout() {
+    try {
+      // Cerrar el diálogo primero
+      this.closeLogoutConfirm();
+      
+      // Mostrar mensaje de "Cerrando sesión..."
+      console.log('🔒 Cerrando sesión...');
+      
+      // Usar el AuthService para hacer logout correctamente
+      await this.authService.logout();
+      
+      // El AuthService ya maneja la redirección a /login
+      // No necesitas hacer nada más aquí
+      
+    } catch (error) {
+      console.error('❌ Error al cerrar sesión:', error);
+      
+      // Si hay error, redirigir manualmente
+      this.router.navigate(['/login']);
+    }
   }
 }

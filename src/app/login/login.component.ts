@@ -77,10 +77,10 @@ import { UserDataService } from '../services/userData.service';
             <span class="button-text">Acceder con Google</span>
           </button>
 
-          <div class="forgot-password-link">
-            <a routerLink="/olvide-password" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
-            <a routerLink="/register" (click)="register($event)">Registrarse</a>
-          </div>
+<div class="forgot-password-link">
+  <a [routerLink]="['/olvide-password']">¿Olvidaste tu contraseña?</a>
+  <a [routerLink]="['/register']">Registrarse</a>
+</div>
         </div>
       </main>
     </div>
@@ -612,14 +612,15 @@ export class LoginComponent {
     }
   }
 
-  forgotPassword(event: Event) {
-    event.preventDefault();
-    console.log('Enlace para ¿Olvidaste tu contraseña? pulsado.');
-    // this.router.navigateByUrl('/forgot-password');
-  }
+forgotPassword(event: Event) {
+  event.preventDefault();
+  console.log('Enlace para ¿Olvidaste tu contraseña? pulsado.');
+  this.router.navigateByUrl('/forgot-password');
+}
 
-  register(event: Event) {
-    event.preventDefault();
-    console.log('Enlace para register pulsado.');
-  }
+register(event: Event) {
+  event.preventDefault();
+  console.log('Enlace para register pulsado.');
+  this.router.navigateByUrl('/register');
+}
 }
