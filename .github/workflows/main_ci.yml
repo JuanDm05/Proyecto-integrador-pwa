@@ -1,57 +1,70 @@
 name: Angular CI & Merge to Main
 
-# 1. Cuándo se ejecuta el pipeline
+
+# 1. Definición del evento que dispara el workflow
 on:
   push:
     branches:
-      - dirier # El pipeline se ejecuta solo cuando se suben cambios a la rama 'dirier'
+      - Dirier # Se ejecuta solo cuando se suben cambios a la rama 'Dirier'
 
-# 2. Permisos necesarios para escribir en el repositorio (para el paso de merge)
+
+# 2. Permisos necesarios para que el GitHub Actions bot pueda escribir en el repositorio (hacer el merge y push)
 permissions:
-  contents: write # Permite que el GitHub Token fusione y haga push
-  pull-requests: write # Necesario para cerrar el PR si se usa uno, aunque aquí usamos merge directo
+  contents: write # Permite la escritura (necesario para el push a main)
+  pull-requests: write # Permiso general para PRs, aunque aquí usamos merge directo
+
 
 jobs:
   run-tests-and-merge:
     name: Run Tests & Auto-Merge
     runs-on: ubuntu-latest
-    
+   
     steps:
-      # --- SETUP: Configuración del Entorno ---
+      # --- SETUP: Obtener el Código ---
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Necesario para poder hacer el merge y push a main
-          fetch-depth: 0 
-          
+          # fetch-depth: 0 es crucial para que Git pueda ver el historial completo
+          # y realizar el checkout/merge correctamente.
+          fetch-depth: 0
+         
+      # --- SETUP: Configuración de Node.js ---
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Asegúrate de que esta versión coincida con tu proyecto
+          node-version: '20' # Ajusta esto si tu proyecto usa otra versión de Node
           cache: 'npm'
-          
+         
+      # --- SETUP: Instalación de Dependencias ---
       - name: Install Dependencies
+        # npm ci es más rápido y seguro para entornos CI que npm install
         run: npm ci
+
 
       # --- TEST: Ejecución de Pruebas ---
       - name: Run Angular Tests (Headless)
-        run: npm run test:ci # Usaremos un script npm para la ejecución sin interfaz gráfica (headless)
-        
+        # Ejecuta tu script configurado en package.json en modo sin interfaz gráfica
+        run: npm run test:ci
+       
       # --- DEPLOYMENT/MERGE: Fusión Condicional ---
-      - name: Merge to Main on Success
-        if: success() # Este paso SÓLO se ejecuta si el paso anterior (Run Angular Tests) tuvo éxito
+      - name: Merge Dirier to Main on Success
+        # if: success() garantiza que este paso solo se ejecuta si el paso anterior pasó
+        if: success()
         run: |
           echo "✅ Pruebas exitosas. Iniciando fusión a la rama main."
-          
+         
           # Configurar la identidad de Git para el commit automático
           git config user.name github-actions[bot]
           git config user.email github-actions[bot]@users.noreply.github.com
-          
-          # Fusionar (merge) la rama 'dirier' a la rama 'main'
+         
+          # 1. Cambiar a la rama principal
           git checkout main
-          git merge origin/dirier --no-ff -m "Merge branch 'dirier' into main [skip ci]"
-          
-          # Subir (push) los cambios fusionados a GitHub
+         
+          # 2. Fusionar la rama 'Dirier' a 'main'
+          # --no-ff fuerza un merge commit, manteniendo un historial claro
+          git merge origin/Dirier --no-ff -m "Merge branch 'Dirier' into main [skip ci]"
+         
+          # 3. Subir los cambios fusionados a GitHub
           git push origin main
-          
-          echo "🚀 Rama 'dirier' fusionada exitosamente a 'main'."
+         
+          echo " Rama 'Dirier' fusionada exitosamente a 'main'."
