@@ -11,6 +11,7 @@ describe('GeminiService (Integración HTTP)', () => {
   const MOCK_RESPUESTA = { 
     candidates: [{ 
       content: 'Respuesta simulada de Gemini.' 
+      
     }] 
   };
   const TEST_MESSAGE = '¿Qué es Angular?';
