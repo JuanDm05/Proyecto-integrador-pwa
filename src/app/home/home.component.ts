@@ -35,7 +35,7 @@ import { AuthService } from '../services/auth.service';
                    class="welcome-image">
             </div>
             
-            <h2 class="welcome-title">Bienvenido, Atleta. 💪</h2>
+            <h2 class="welcome-title">Bienvenido, Atleta 💪</h2>
             <p class="welcome-text">Habla con tu Coach IA o revisa tus planes de entrenamiento y nutrición.</p>
           </div>
           
